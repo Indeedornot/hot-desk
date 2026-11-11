@@ -1,0 +1,80 @@
+import { Component, inject, signal } from '@angular/core';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { SessionService } from './session.service';
+import { errorMessage } from './api.service';
+
+@Component({
+  selector: 'app-root',
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  template: `
+    @if (session.user(); as user) {
+      <div class="app-layout">
+        <aside class="sidebar">
+          <a class="brand" routerLink="/desks"
+            ><span class="brand-mark">h<span></span></span>hot desk<span class="brand-dot"
+              >.</span
+            ></a
+          >
+          <p class="nav-caption">Your workspace</p>
+          <nav aria-label="Main navigation">
+            <a routerLink="/desks" routerLinkActive="active"
+              ><span class="nav-icon">▦</span>Find a desk</a
+            >
+            <a routerLink="/bookings" routerLinkActive="active"
+              ><span class="nav-icon">▤</span>My reservations</a
+            >
+            <a routerLink="/activity" routerLinkActive="active"
+              ><span class="nav-icon">◷</span>My activity</a
+            >
+            @if (user.role === 'ROLE_ADMIN') {
+              <p class="nav-caption admin-caption">Administration</p>
+              <a routerLink="/admin" routerLinkActive="active"
+                ><span class="nav-icon">⚙</span>Manage workspace</a
+              >
+              <a routerLink="/events" routerLinkActive="active"
+                ><span class="nav-icon">≡</span>Event history</a
+              >
+            }
+          </nav>
+          <div class="sidebar-bottom">
+            <div class="office-note">
+              <span class="status-dot"></span>A little space to do your best work.
+            </div>
+            <div class="account">
+              <span class="avatar">{{ user.name.slice(0, 1) }}</span>
+              <div>
+                <strong>{{ user.name }}</strong><small>{{
+                  user.role === 'ROLE_ADMIN' ? 'Administrator' : 'Team member'
+                }}</small>
+              </div>
+            </div>
+            <button class="text-button signout" (click)="logout()">Sign out</button>
+            @if (error()) {
+              <p class="inline-error" role="alert">{{ error() }}</p>
+            }
+          </div>
+        </aside>
+        <div class="main-column">
+          <header class="topbar">
+            <span>Space for a good working day</span
+            ><span class="topbar-right"><span class="status-dot"></span>Office workspace</span>
+          </header>
+          <main><router-outlet /></main>
+        </div>
+      </div>
+    } @else {
+      <router-outlet />
+    }
+  `,
+})
+export class App {
+  readonly session = inject(SessionService);
+  readonly error = signal('');
+  async logout(): Promise<void> {
+    try {
+      await this.session.logout();
+    } catch (error) {
+      this.error.set(errorMessage(error));
+    }
+  }
+}

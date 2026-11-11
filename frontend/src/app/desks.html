@@ -1,0 +1,210 @@
+<div class="page-heading">
+  <div>
+    <p class="breadcrumb">Workspace / Desks</p>
+    <h1>Find your spot.</h1>
+    <p class="muted">A quiet corner or a seat with the team. Make the day yours.</p>
+  </div>
+  <a class="button secondary" routerLink="/bookings"
+    >My reservations <span aria-hidden="true">↗</span></a
+  >
+</div>
+@if (error()) {
+  <div class="error-box" role="alert">
+    {{ error() }} <button class="text-button" (click)="load()">Try again</button>
+  </div>
+}
+@if (notice()) {
+  <div class="success-box" role="status">
+    {{ notice() }} <a routerLink="/bookings">View reservation</a>
+  </div>
+}
+@if (!loading() && !offices().length) {
+  <section class="empty-state">
+    <h2>No offices yet</h2>
+    <p>Your administrator needs to add an office and its desks first.</p>
+  </section>
+}
+@if (offices().length) {
+  <section class="workspace-toolbar" aria-label="Desk filters">
+    <label class="office-picker"
+      >Office<select name="office" [(ngModel)]="officeId" (ngModelChange)="load()">
+        @for (office of offices(); track office.id) {
+          <option [ngValue]="office.id">{{ office.name }}</option>
+        }
+      </select></label
+    >
+    <div class="day-picker">
+      <span>When are you coming in?</span>
+      <div class="segmented">
+        <button [class.selected]="day === 0" (click)="day = 0; load()">Today</button
+        ><button [class.selected]="day === 1" (click)="day = 1; load()">Tomorrow</button>
+      </div>
+    </div>
+    <div class="date-label">
+      <strong>{{ date | date: 'EEEE, d MMM' }}</strong><small
+        >{{ office?.openingTime }}–{{ office?.closingTime }} · {{ office?.timezone }}</small
+      >
+    </div>
+  </section>
+  @if (data()?.assignedSeat; as seat) {
+    <div class="assignment-banner">
+      <span aria-hidden="true">⌖</span>
+      <div>
+        <strong>You have a dedicated desk: {{ seat.deskLabel }}</strong>
+        <p>
+          {{ seat.officeName }}. You can reserve this desk until your administrator removes the
+          assignment.
+        </p>
+      </div>
+    </div>
+  }
+  <div class="desk-workspace">
+    <section class="floor-panel">
+      <div class="panel-heading">
+        <div>
+          <h2>Your office, at a glance</h2>
+          <p>
+            <span class="status-dot"></span>{{ available() }} desks available
+            <span class="muted">of {{ data()?.items?.length ?? 0 }}</span>
+          </p>
+        </div>
+        <div class="segmented compact">
+          <button [class.selected]="view === 'map'" (click)="view = 'map'">Map</button
+          ><button [class.selected]="view === 'list'" (click)="view = 'list'">List</button>
+        </div>
+      </div>
+      <div class="map-tools">
+        <label class="search-input"
+          ><span aria-hidden="true">⌕</span
+          ><input
+            aria-label="Search desks or equipment"
+            [(ngModel)]="search"
+            placeholder="Find a desk or equipment"
+        /></label>
+        <div class="legend">
+          <span><i class="legend-dot free"></i>Available</span
+          ><span><i class="legend-dot taken"></i>Reserved</span
+          ><span><i class="legend-dot assigned"></i>Assigned</span>
+        </div>
+      </div>
+      @if (loading()) {
+        <div class="empty-state" role="status">Checking your workspace…</div>
+      } @else if (!desks.length) {
+        <div class="empty-state">
+          <h3>No desks found</h3>
+          <p>Try another search or office.</p>
+        </div>
+      } @else if (view === 'map') {
+        <div class="floor-scroll">
+          <div class="floor-plan">
+            <div class="windows"><span></span><span></span><span></span><span></span></div>
+            <div class="room-label">Open workspace <span>Windows</span></div>
+            <div class="desk-grid" [style.grid-template-columns]="columns">
+              @for (desk of desks; track desk.id) {
+                <button
+                  class="desk-place"
+                  [class.taken]="desk.state === 'reserved' || desk.state === 'occupied'"
+                  [class.assigned]="desk.state === 'assigned'"
+                  [class.chosen]="selected()?.id === desk.id"
+                  [class.restricted]="!desk.available"
+                  [style.grid-column]="desk.x + 1"
+                  [style.grid-row]="desk.y + 1"
+                  (click)="select(desk)"
+                  [attr.aria-label]="
+                    'Desk ' + desk.label + ', ' + (desk.available ? 'available' : desk.state)
+                  "
+                >
+                  <span class="monitor" aria-hidden="true"></span><strong>{{ desk.label }}</strong
+                  ><small>{{
+                    desk.myBookingId ? 'Your desk' : desk.available ? 'Available' : desk.state
+                  }}</small
+                  ><span class="chair" aria-hidden="true"></span>
+                </button>
+              }
+            </div>
+            <div class="room-bottom">
+              <span class="plant" aria-hidden="true">✳</span><span>Entrance</span
+              ><span class="door" aria-hidden="true"></span
+              ><span class="room-lounge">Breakout area <span aria-hidden="true">▱ ▱</span></span>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <div class="desk-list">
+          @for (desk of desks; track desk.id) {
+            <button
+              class="desk-list-row"
+              [class.chosen]="selected()?.id === desk.id"
+              (click)="select(desk)"
+            >
+              <strong>{{ desk.label }}</strong><span>{{ desk.equipment }}</span
+              ><span class="badge" [class.green]="desk.available">{{
+                desk.available ? 'Available' : desk.state
+              }}</span>
+            </button>
+          }
+        </div>
+      }
+      <p class="panel-footnote">Select a desk to see the details and reserve your day.</p>
+    </section>
+    <aside class="reservation-panel">
+      @if (selected(); as desk) {
+        <div class="selection-title">
+          <span class="desk-symbol" aria-hidden="true">▤</span><span>Selected desk</span>
+        </div>
+        <h2 class="desk-number">{{ desk.label }}</h2>
+        <p class="muted">{{ office?.name }}</p>
+        <span class="badge" [class.green]="desk.available">{{
+          desk.available ? 'Available for your day' : desk.state
+        }}</span>
+        <hr />
+        <dl class="detail-list">
+          <div>
+            <dt>Date</dt>
+            <dd>{{ date | date: 'd MMMM yyyy' }}</dd>
+          </div>
+          <div>
+            <dt>Reservation</dt>
+            <dd>Whole working day</dd>
+          </div>
+          <div>
+            <dt>Office hours</dt>
+            <dd>{{ office?.openingTime }}–{{ office?.closingTime }}</dd>
+          </div>
+        </dl>
+        <div class="equipment">
+          <h3>At this desk</h3>
+          <p>{{ desk.equipment || 'Standard workspace' }}</p>
+        </div>
+        @if (desk.reason) {
+          <p class="info-box">{{ desk.reason }}</p>
+        }
+        <button
+          class="button primary full-width"
+          [disabled]="!desk.available || busy()"
+          (click)="book()"
+        >
+          {{ busy() ? 'Reserving…' : 'Reserve ' + desk.label }}
+        </button>
+        @if (desk.myBookingId) {
+          <a class="button secondary full-width" routerLink="/bookings">Manage this reservation</a>
+        }
+        <p class="small-note">
+          Plans changed? Cancel before check-in, or check out when you leave.
+        </p>
+      } @else {
+        <div class="selection-placeholder">
+          <span class="empty-desk" aria-hidden="true">▱</span>
+          <h2>A seat with your name on it.</h2>
+          <p>Choose a desk on the map to see what’s included and reserve it for your day.</p>
+        </div>
+        <div class="how-it-works">
+          <strong>A simpler working day</strong>
+          <p><span>1</span>Reserve today or tomorrow.</p>
+          <p><span>2</span>Check in when you arrive.</p>
+          <p><span>3</span>Check out when you leave.</p>
+        </div>
+      }
+    </aside>
+  </div>
+}
