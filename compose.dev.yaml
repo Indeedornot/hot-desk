@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:18.6-alpine3.23
+    container_name: hot-desk-postgres
+    env_file: .local/database.env
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U hotdesk -d hotdesk"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
+    networks:
+      - shared
+volumes:
+  postgres_data:
+networks:
+  shared:
+    external: true
+    name: docker-environment_default

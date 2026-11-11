@@ -1,0 +1,1573 @@
+openapi: 3.0.3
+info:
+  title: Hot Desk API
+  version: 1.0.0
+  description:
+    Whole-day office reservations, permanent desks and attendance history. All /admin operations
+    require ROLE_ADMIN. Other protected operations require ROLE_USER. Reservations are dated in the office
+    timezone; audit timestamps include UTC offsets. Mutations require a session-bound CSRF token.
+servers:
+  - url: /api
+security:
+  - sessionAuth: []
+paths:
+  /auth/csrf:
+    get:
+      summary: Get a CSRF token
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  csrfToken:
+                    type: string
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      security: []
+  /auth/login:
+    post:
+      summary: Sign in
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  csrfToken:
+                    type: string
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+        "429":
+          $ref: "#/components/responses/Error429"
+      description:
+        Sets the HttpOnly session cookie. Five failed login attempts per minute are allowed;
+        throttled attempts return 429.
+      security: []
+      parameters:
+        - &id001
+          name: X-CSRF-TOKEN
+          in: header
+          required: true
+          description: Get the token from GET /auth/csrf, or the successful login response.
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+              required:
+                - email
+                - password
+  /auth/me:
+    get:
+      summary: Get the signed-in account
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: "#/components/schemas/User"
+                  csrfToken:
+                    type: string
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /auth/logout:
+    post:
+      summary: Sign out and invalidate the session
+      tags:
+        - Authentication
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - *id001
+  /offices:
+    get:
+      summary: List active offices
+      tags:
+        - Workspace
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Office"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+  /desks:
+    get:
+      summary: Get desk availability for today or tomorrow
+      tags:
+        - Workspace
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AvailableDesk"
+                  assignedSeat:
+                    allOf:
+                      - $ref: "#/components/schemas/Assignment"
+                    nullable: true
+                  office:
+                    $ref: "#/components/schemas/Office"
+                  date:
+                    type: string
+                    format: date
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      description:
+        Permanent assignments and existing reservations affect whether the current user may
+        reserve a desk. Reserved/occupied desks remain visible.
+      parameters:
+        - name: officeId
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+  /bookings:
+    get:
+      summary: List your reservations
+      tags:
+        - Workspace
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Booking"
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                    minimum: 1
+                  pageSize:
+                    type: integer
+                    minimum: 1
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - &id002
+          name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+        - &id003
+          name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+        - &id004
+          name: date
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date
+        - &id005
+          name: status
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - BOOKED
+              - CHECKED_IN
+              - CHECKED_OUT
+              - CANCELLED
+        - &id006
+          name: officeId
+          in: query
+          required: false
+          schema:
+            type: integer
+    post:
+      summary: Reserve a desk
+      tags:
+        - Workspace
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      description:
+        Creates a whole-day reservation, an audit event and a queued email in one transaction.
+        Permanent assignments are enforced.
+      parameters:
+        - *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+  /bookings/{id}:
+    put:
+      summary: Change an upcoming reservation
+      tags:
+        - Workspace
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      description:
+        The owner or an administrator may edit a BOOKED reservation before it ends. All reservation
+        rules are checked again.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+  /bookings/{id}/cancel:
+    post:
+      summary: Cancel a BOOKED reservation and release the desk.
+      tags:
+        - Workspace
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      description:
+        Only the owner or an administrator may perform this action. The audit records the actual
+        actor and the reservation owner separately. Invalid repeated transitions return 409.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - *id001
+  /bookings/{id}/check-in:
+    post:
+      summary: Check in to a BOOKED reservation on its day during office hours.
+      tags:
+        - Workspace
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      description:
+        Only the owner or an administrator may perform this action. The audit records the actual
+        actor and the reservation owner separately. Invalid repeated transitions return 409.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - *id001
+  /bookings/{id}/check-out:
+    post:
+      summary: Check out of a CHECKED_IN reservation and release the desk for the remaining day.
+      tags:
+        - Workspace
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      description:
+        Only the owner or an administrator may perform this action. The audit records the actual
+        actor and the reservation owner separately. Invalid repeated transitions return 409.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - *id001
+  /events:
+    get:
+      summary: List your reservation and assignment events
+      tags:
+        - Workspace
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditEvent"
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                    minimum: 1
+                  pageSize:
+                    type: integer
+                    minimum: 1
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - *id002
+        - *id003
+        - &id007
+          name: event_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum:
+              - booking
+              - attendance
+              - administration
+        - &id008
+          name: event_name
+          in: query
+          required: false
+          schema:
+            type: string
+        - &id009
+          name: bookingId
+          in: query
+          required: false
+          schema:
+            type: integer
+  /admin/offices:
+    get:
+      summary: List offices
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Office"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    post:
+      summary: Create office
+      tags:
+        - Administration
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Office"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfficeInput"
+  /admin/offices/{id}:
+    put:
+      summary: Update office
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Office"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OfficeInput"
+    delete:
+      summary: Delete unused office
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      description:
+        Dependent records prevent deletion with 409. Deactivate a resource through its update
+        endpoint when its history must be preserved. Resolve active bookings and assignments first. The
+        final active administrator is protected.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - *id001
+  /admin/desks:
+    get:
+      summary: List desks
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Desk"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    post:
+      summary: Create desk
+      tags:
+        - Administration
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Desk"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeskInput"
+  /admin/desks/{id}:
+    put:
+      summary: Update desk
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Desk"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeskInput"
+    delete:
+      summary: Delete unused desk
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      description:
+        Dependent records prevent deletion with 409. Deactivate a resource through its update
+        endpoint when its history must be preserved. Resolve active bookings and assignments first. The
+        final active administrator is protected.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - *id001
+  /admin/users:
+    get:
+      summary: List users
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/User"
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                    minimum: 1
+                  pageSize:
+                    type: integer
+                    minimum: 1
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - *id002
+        - *id003
+        - name: q
+          in: query
+          required: false
+          schema:
+            type: string
+    post:
+      summary: Create user
+      tags:
+        - Administration
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+  /admin/users/{id}:
+    put:
+      summary: Update user
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserInput"
+    delete:
+      summary: Delete unused user
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      description:
+        Dependent records prevent deletion with 409. Deactivate a resource through its update
+        endpoint when its history must be preserved. Resolve active bookings and assignments first. The
+        final active administrator is protected.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - *id001
+  /admin/assignments:
+    get:
+      summary: List permanent seat assignments
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Assignment"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+    post:
+      summary: Assign a permanent seat
+      tags:
+        - Administration
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Assignment"
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      description:
+        One seat per user and one owner per desk. Conflicting current/future reservations return
+        409 and remain unchanged.
+      parameters:
+        - *id001
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignmentInput"
+  /admin/assignments/{id}:
+    delete:
+      summary: Remove a permanent assignment
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - *id001
+  /admin/bookings:
+    get:
+      summary: List all reservations
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Booking"
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                    minimum: 1
+                  pageSize:
+                    type: integer
+                    minimum: 1
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - *id002
+        - *id003
+        - *id004
+        - *id005
+        - *id006
+  /admin/events:
+    get:
+      summary: List the office audit history
+      tags:
+        - Administration
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AuditEvent"
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                    minimum: 1
+                  pageSize:
+                    type: integer
+                    minimum: 1
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+      parameters:
+        - *id002
+        - *id003
+        - *id007
+        - *id008
+        - *id009
+  /openapi.json:
+    get:
+      summary: Read this API specification
+      tags:
+        - Workspace
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          $ref: "#/components/responses/Error400"
+        "401":
+          $ref: "#/components/responses/Error401"
+        "403":
+          $ref: "#/components/responses/Error403"
+        "404":
+          $ref: "#/components/responses/Error404"
+        "409":
+          $ref: "#/components/responses/Error409"
+        "422":
+          $ref: "#/components/responses/Error422"
+        "500":
+          $ref: "#/components/responses/Error500"
+components:
+  securitySchemes:
+    sessionAuth:
+      type: apiKey
+      in: cookie
+      name: PHPSESSID
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            fields:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        email: &id022
+          type: string
+          format: email
+        name: &id023
+          type: string
+        role: &id024
+          type: string
+          enum:
+            - ROLE_USER
+            - ROLE_ADMIN
+        active: &id025
+          type: boolean
+    Office:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        name: &id010
+          type: string
+          maxLength: 100
+        address: &id011
+          type: string
+          maxLength: 255
+        timezone: &id012
+          type: string
+          example: Europe/Warsaw
+        openingTime: &id013
+          type: string
+          example: 08:00
+        closingTime: &id014
+          type: string
+          example: "18:00"
+        active: &id015
+          type: boolean
+    Desk:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        officeId: &id016
+          type: integer
+          minimum: 1
+        officeName:
+          type: string
+        label: &id017
+          type: string
+          maxLength: 40
+        equipment: &id018
+          type: string
+          maxLength: 255
+        x: &id019
+          type: integer
+          minimum: 0
+          maximum: 9
+        y: &id020
+          type: integer
+          minimum: 0
+          maximum: 9
+        active: &id021
+          type: boolean
+    Assignment:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        userId:
+          type: integer
+          minimum: 1
+        userName:
+          type: string
+        deskId:
+          type: integer
+          minimum: 1
+        deskLabel:
+          type: string
+        officeName:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        userId:
+          type: integer
+          minimum: 1
+        userName:
+          type: string
+        deskId:
+          type: integer
+          minimum: 1
+        deskLabel:
+          type: string
+        officeId:
+          type: integer
+          minimum: 1
+        officeName:
+          type: string
+        timezone:
+          type: string
+        date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum:
+            - BOOKED
+            - CHECKED_IN
+            - CHECKED_OUT
+            - CANCELLED
+        elapsed:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+          nullable: false
+        checkedInAt:
+          type: string
+          format: date-time
+          nullable: true
+        checkedOutAt:
+          type: string
+          format: date-time
+          nullable: true
+        cancelledAt:
+          type: string
+          format: date-time
+          nullable: true
+    AuditEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          minimum: 1
+        actorId:
+          type: integer
+          minimum: 1
+        actorName:
+          type: string
+        event_name:
+          type: string
+          example: booking.checked_in
+        event_date:
+          type: string
+          format: date-time
+        event_type:
+          type: string
+          enum:
+            - booking
+            - attendance
+            - administration
+        event_data:
+          type: object
+          additionalProperties: true
+          example:
+            bookingId: 12
+            userId: 2
+            deskId: 4
+            date: "2026-11-12"
+            status: CHECKED_IN
+            source: manual
+            eventId: c5fe1fa7d641ed91ed7fc3ab216048c3
+    OfficeInput:
+      type: object
+      properties:
+        name: *id010
+        address: *id011
+        timezone: *id012
+        openingTime: *id013
+        closingTime: *id014
+        active: *id015
+      required:
+        - name
+        - address
+    DeskInput:
+      type: object
+      properties:
+        officeId: *id016
+        label: *id017
+        equipment: *id018
+        x: *id019
+        y: *id020
+        active: *id021
+      required:
+        - officeId
+        - label
+    UserInput:
+      type: object
+      properties:
+        email: *id022
+        name: *id023
+        role: *id024
+        active: *id025
+        password:
+          type: string
+          minLength: 10
+          maxLength: 128
+          nullable: true
+          description: Required for creation. Null on edit keeps the existing password.
+      required:
+        - email
+        - name
+    BookingInput:
+      type: object
+      properties:
+        deskId:
+          type: integer
+          minimum: 1
+        date:
+          type: string
+          format: date
+          description: Today or tomorrow in the office timezone.
+      required:
+        - deskId
+        - date
+    AssignmentInput:
+      type: object
+      properties:
+        deskId:
+          type: integer
+          minimum: 1
+        userId:
+          type: integer
+          minimum: 1
+      required:
+        - deskId
+        - userId
+    AvailableDesk:
+      allOf:
+        - $ref: "#/components/schemas/Desk"
+        - type: object
+          properties:
+            available:
+              type: boolean
+            state:
+              type: string
+              enum:
+                - available
+                - assigned
+                - reserved
+                - occupied
+            reason:
+              type: string
+              nullable: true
+            isAssignedToMe:
+              type: boolean
+            myBookingId:
+              type: integer
+              nullable: true
+  responses:
+    Error400:
+      description: Malformed request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error401:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error403:
+      description: Permission or CSRF denied
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error404:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error409:
+      description: Business rule or data conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error422:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error500:
+      description: Unexpected server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+    Error429:
+      description: Too many login attempts
