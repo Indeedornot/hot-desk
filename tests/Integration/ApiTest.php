@@ -84,6 +84,8 @@ final class ApiTest extends WebTestCase
         $this->login();
         $result = $this->send('POST', '/api/bookings', ['deskId' => 1, 'date' => gmdate('Y-m-d')]);
         self::assertResponseStatusCodeSame(201);
+        self::assertSame(gmdate('Y-m-d').'T00:00:00+00:00', $result['startsAt'] ?? null);
+        self::assertSame(gmdate('Y-m-d').'T23:59:00+00:00', $result['endsAt'] ?? null);
         $id = $result['id'];
         $this->send('POST', "/api/bookings/$id/check-in");
         self::assertResponseIsSuccessful();

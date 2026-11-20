@@ -1,7 +1,6 @@
 # Demo outline
 
-Aim for 3–5 minutes. Start PostgreSQL, build the frontend and run the email worker
-before recording. Use the generated local accounts; keep passwords off-screen.
+Aim for 3–5 minutes. Start the Compose stack before recording. Use the generated local accounts; keep passwords off-screen.
 
 1. Sign in as a member. Select an office and tomorrow. Show desk equipment and
    reserve a desk. Open My reservations and the activity timeline.

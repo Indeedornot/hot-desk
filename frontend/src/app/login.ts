@@ -12,19 +12,15 @@ import { errorMessage } from './api.service';
       <section class="login-intro">
         <div class="brand light">hot desk.</div>
         <div>
-          <p class="login-overline">A place for your working day</p>
-          <h1>Your desk.<br />Your kind of day.</h1>
-          <p>Find a spot, settle in, and make room for good work.</p>
+          <h1>Office desk booking</h1>
           <div class="desk-illustration" aria-hidden="true">
             <span></span><span></span><span></span><span></span>
           </div>
         </div>
-        <small>Shared space. Made simple.</small>
       </section>
       <section class="login-form-wrap">
         <form class="login-form" (ngSubmit)="submit()">
-          <p class="muted">Welcome to your workspace</p>
-          <h2>Make yourself at home.</h2>
+          <h2>Sign in</h2>
           <p class="muted">Sign in with the account provided by your office administrator.</p>
           <label
             >Email address<input

@@ -7,7 +7,7 @@ and project requirements are retained.
 | Requirement | Implementation |
 | --- | --- |
 | Backend and REST API | Symfony controllers under `src/Controller` |
-| Separate persistent database | PostgreSQL service in `compose.dev.yaml` |
+| Separate persistent database | PostgreSQL service in `compose.yaml` |
 | ORM and migrations | Doctrine entities and versioned SQL migration |
 | Five related models | User, Office, Desk, Booking, SeatAssignment, AuditEvent |
 | Main-resource CRUD | Offices, desks, accounts; booking edits and cancellation preserve history |
@@ -27,9 +27,8 @@ and project requirements are retained.
 | Responsive design | Desktop desk map and mobile layout |
 | README and ERD | `README.md`, `docs/data-model.md` |
 | Git history | Local commits after formatting, checks and review |
-| Separate backend/database containers in Compose | Pending standalone packaging phase; shared PHP used for development by request |
+| Separate backend/database containers in Compose | Standalone `compose.yaml` with backend, PostgreSQL, worker and Mailpit |
 | Repository URL and final commit/tag | Final submission step |
 | Demo video | Recording pending; outline in `docs/demo.md` |
 
-Technical coverage does not guarantee a grade. Standalone packaging and the
-recorded demonstration remain part of the final delivery.
+Technical coverage does not guarantee a grade. The recorded demonstration remains part of the final delivery.

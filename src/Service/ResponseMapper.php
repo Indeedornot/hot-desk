@@ -32,7 +32,7 @@ final class ResponseMapper
     {
         $now = new \DateTimeImmutable();
 
-        return ['id' => $b->id, 'userId' => $b->user->id, 'userName' => $b->user->name, 'deskId' => $b->desk->id, 'deskLabel' => $b->desk->label, 'officeName' => $b->desk->office->name, 'officeId' => $b->desk->office->id, 'timezone' => $b->desk->office->timezone, 'date' => $b->date->format('Y-m-d'), 'status' => $b->status, 'elapsed' => $b->endsAt <= $now, 'createdAt' => $b->createdAt->format(DATE_ATOM), 'checkedInAt' => $b->checkedInAt?->format(DATE_ATOM), 'checkedOutAt' => $b->checkedOutAt?->format(DATE_ATOM), 'cancelledAt' => $b->cancelledAt?->format(DATE_ATOM)];
+        return ['id' => $b->id, 'userId' => $b->user->id, 'userName' => $b->user->name, 'deskId' => $b->desk->id, 'deskLabel' => $b->desk->label, 'officeName' => $b->desk->office->name, 'officeId' => $b->desk->office->id, 'timezone' => $b->desk->office->timezone, 'date' => $b->date->format('Y-m-d'), 'startsAt' => $b->startsAt->format(DATE_ATOM), 'endsAt' => $b->endsAt->format(DATE_ATOM), 'status' => $b->status, 'elapsed' => $b->endsAt <= $now, 'createdAt' => $b->createdAt->format(DATE_ATOM), 'checkedInAt' => $b->checkedInAt?->format(DATE_ATOM), 'checkedOutAt' => $b->checkedOutAt?->format(DATE_ATOM), 'cancelledAt' => $b->cancelledAt?->format(DATE_ATOM)];
     }
 
     public static function assignment(SeatAssignment $a): array

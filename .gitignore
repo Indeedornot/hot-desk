@@ -28,3 +28,4 @@
 ###< phpunit/phpunit ###
 
 /config/reference.php
+/.compose.env

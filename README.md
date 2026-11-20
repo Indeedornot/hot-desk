@@ -4,74 +4,46 @@ Office desk reservations with permanent seat assignments and attendance history.
 Built with Angular 21, Symfony 7.4 / PHP 8.3, Doctrine ORM and PostgreSQL 18.
 Symfony Messenger handles booking emails asynchronously.
 
-## Run locally
+## Run with Docker Compose
 
-The current setup uses the shared `/var/www/docker-environment` PHP service.
-Place this checkout at `/var/www/sites/hot-desk`. The shared service must mount
-`/var/www/sites` at `/srv/sites`, join `docker-environment_default`, and route
-`hot-desk.localhost` to this project's `public/` directory. Mailpit is available
-as `mailer` on that network.
+From a fresh clone, with Docker and the Compose plugin installed, run:
 
-Requirements: Docker Compose, Node 22.12+ (22.x), npm, Python 3 and the shared
-PHP service. PHP needs `pdo_pgsql`, `intl`, `mbstring`, `ctype`, `iconv` and the
-normal Symfony extensions.
-
-The shared PHP Dockerfile needs `libpq-dev` in its apt dependencies and
-`pdo_pgsql` in its `docker-php-ext-install` list. These additions have been made
-to the local shared image definition. For an older running image:
-
-```bash
-docker exec docker-environment-frankenphp-1 install-php-extensions pdo_pgsql
-docker restart docker-environment-frankenphp-1
+```sh
+(umask 077
+  printf 'HOT_DESK_APP_SECRET=%s\n' "$(openssl rand -hex 32)"
+  printf 'HOT_DESK_DB_PASSWORD=%s\n' "$(openssl rand -hex 24)"
+) > .compose.env
+docker compose --env-file .compose.env up --build -d
 ```
 
-The restart briefly affects other PHP projects in that container. A later image
-rebuild must retain the Dockerfile additions above.
+Generate `.compose.env` once and keep it for subsequent runs. The password is
+used to initialize PostgreSQL. The file is ignored by Git.
 
-From this repository:
+Open <http://localhost:8080>. Compose builds Angular and the Symfony backend,
+migrates PostgreSQL and seeds a demo office on first boot. It also runs the
+notification worker. To retrieve the generated demo credentials, run:
 
-```bash
-bash scripts/setup.sh
+```sh
+docker compose --env-file .compose.env exec backend cat .local/accounts.json
 ```
 
-Setup generates local secrets, starts PostgreSQL, installs dependencies, migrates
-the development/test databases, creates demo data only in an empty user database,
-and builds Angular. Open **http://hot-desk.localhost**.
+Use `admin@hotdesk.test` for administration and `anna@hotdesk.test` or
+`piotr@hotdesk.test` for the member views. The demo office is open
+08:00–18:00 Europe/Warsaw. Check-in can be demonstrated during those hours,
+or after changing the demo office hours before making a booking.
 
-Generated passwords are in `.local/accounts.json` (mode 600). Demo accounts:
+Booking notifications appear in Mailpit at <http://localhost:8025>. If either
+port is in use, set `HOT_DESK_PORT` or `HOT_DESK_MAIL_PORT` in `.compose.env`.
+Run `docker compose --env-file .compose.env down` to stop the stack.
+The database and demo credentials persist in Docker volumes.
 
-| Account | Role |
-| --- | --- |
-| `admin@hotdesk.test` | Administrator |
-| `anna@hotdesk.test` | Team member |
-| `piotr@hotdesk.test` | Team member |
+## Development on the shared PHP environment
 
-The demo office has twelve desks and working hours of 08:00–18:00 in Europe/Warsaw.
-Administrators can change the hours when there are no current/future bookings.
-
-The PHP helper accepts `PHP_CONTAINER` and `PHP_PROJECT_DIR` overrides. For a
-local PHP installation, set `PHP_EXECUTION=local` and configure a reachable
-`DATABASE_URL` in `.env.local`. The default database hostname is on Docker's network.
-
-## Development and email worker
-
-```bash
-npm --prefix frontend run build
-bash scripts/php.sh bin/console doctrine:migrations:migrate --no-interaction
-bash scripts/worker.sh
-```
-
-Rebuild Angular after frontend changes. PHP serves its output from `public/app`.
-The worker consumes booking notifications; stop it with Ctrl+C. Inspect delivered
-emails at **http://mail.localhost**. Failed notifications can be inspected/retried:
-
-```bash
-bash scripts/php.sh bin/console messenger:failed:show
-bash scripts/php.sh bin/console messenger:failed:retry
-```
-
-PostgreSQL data persists in the `hot-desk_postgres_data` volume. Stop it with
-`docker compose -p hot-desk -f compose.dev.yaml down`. Adding `-v` deletes its data.
+The optional `bash scripts/setup.sh` workflow uses the local
+`/var/www/docker-environment` FrankenPHP service with `pdo_pgsql` enabled and
+Node 22.12+ on the host. Put the checkout at `/var/www/sites/hot-desk` and open
+<http://hot-desk.localhost>. Run `bash scripts/worker.sh` in a separate terminal
+for notifications. This workflow uses `compose.dev.yaml` and its own database.
 
 ## Main rules
 
@@ -154,7 +126,5 @@ dependencies and build output are excluded from Git.
 [Requirements coverage](docs/requirements.md) maps the project to the course
 criteria. [Demo outline](docs/demo.md) describes a 3–5 minute presentation.
 
-Standalone Compose packaging is the next phase. `compose.dev.yaml` currently
-starts the project database and uses the existing shared PHP network. Final
-submission still requires a repository URL, a reviewed final commit/tag and a
-recorded demonstration.
+The course submission also requires a repository URL, a final commit SHA or tag,
+and a recorded demonstration.

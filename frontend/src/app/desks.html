@@ -1,8 +1,8 @@
 <div class="page-heading">
   <div>
     <p class="breadcrumb">Workspace / Desks</p>
-    <h1>Find your spot.</h1>
-    <p class="muted">A quiet corner or a seat with the team. Make the day yours.</p>
+    <h1>Find a desk</h1>
+    <p class="muted">Reserve a desk for today or tomorrow.</p>
   </div>
   <a class="button secondary" routerLink="/bookings"
     >My reservations <span aria-hidden="true">↗</span></a
@@ -62,7 +62,7 @@
     <section class="floor-panel">
       <div class="panel-heading">
         <div>
-          <h2>Your office, at a glance</h2>
+          <h2>Desk availability</h2>
           <p>
             <span class="status-dot"></span>{{ available() }} desks available
             <span class="muted">of {{ data()?.items?.length ?? 0 }}</span>
@@ -195,14 +195,8 @@
       } @else {
         <div class="selection-placeholder">
           <span class="empty-desk" aria-hidden="true">▱</span>
-          <h2>A seat with your name on it.</h2>
-          <p>Choose a desk on the map to see what’s included and reserve it for your day.</p>
-        </div>
-        <div class="how-it-works">
-          <strong>A simpler working day</strong>
-          <p><span>1</span>Reserve today or tomorrow.</p>
-          <p><span>2</span>Check in when you arrive.</p>
-          <p><span>3</span>Check out when you leave.</p>
+          <h2>Select a desk</h2>
+          <p>View equipment and reserve the desk.</p>
         </div>
       }
     </aside>

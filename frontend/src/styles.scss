@@ -169,13 +169,6 @@ nav a.active {
   margin-top: auto;
   padding: 30px 10px 0;
 }
-.office-note {
-  font-size: 12px;
-  line-height: 1.7;
-  color: var(--muted);
-  padding-bottom: 23px;
-  border-bottom: 1px solid var(--line);
-}
 .status-dot {
   width: 6px;
   height: 6px;
@@ -215,20 +208,6 @@ nav a.active {
 }
 .main-column {
   min-width: 0;
-}
-.topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  height: 68px;
-  border-bottom: 1px solid var(--line);
-  padding: 0 38px;
-  color: var(--muted);
-  font-size: 12px;
-  background: #ffffffb3;
-}
-.topbar-right {
-  font-size: 11px;
 }
 main {
   max-width: 1470px;
@@ -712,31 +691,6 @@ input[type='checkbox'] {
   color: var(--muted);
   font-size: 12px;
 }
-.how-it-works {
-  border-top: 1px solid var(--line);
-  padding-top: 23px;
-}
-.how-it-works strong {
-  font-size: 12px;
-  display: block;
-  margin-bottom: 17px;
-}
-.how-it-works p {
-  font-size: 11px;
-  color: var(--muted);
-  margin-bottom: 13px;
-}
-.how-it-works p span {
-  display: inline-grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  background: #f1f5ef;
-  border-radius: 50%;
-  margin-right: 7px;
-  font-size: 9px;
-  color: var(--green);
-}
 .assignment-banner {
   padding: 17px 20px;
   background: #f5f1e6;
@@ -1088,19 +1042,6 @@ pre {
   font-weight: 500;
   margin: 20px 0 25px;
 }
-.login-overline {
-  color: #adc8b6;
-  font-size: 12px;
-}
-.login-intro p:not(.login-overline) {
-  color: #c4d9ca;
-  max-width: 300px;
-  font-size: 14px;
-}
-.login-intro small {
-  color: #a8c4b2;
-  font-size: 11px;
-}
 .login-form-wrap {
   display: flex;
   align-items: center;
@@ -1190,9 +1131,6 @@ pre {
   main {
     padding: 30px 24px;
   }
-  .topbar {
-    padding: 0 24px;
-  }
   .desk-workspace {
     grid-template-columns: minmax(0, 1fr) 235px;
     gap: 15px;
@@ -1235,8 +1173,7 @@ pre {
   .selection-placeholder h2 {
     max-width: none;
   }
-  .selection-placeholder .empty-desk,
-  .how-it-works {
+  .selection-placeholder .empty-desk {
     display: none;
   }
   .workspace-toolbar {
@@ -1278,7 +1215,6 @@ pre {
   }
   .sidebar > .nav-caption,
   .nav-caption,
-  .office-note,
   .account {
     display: none;
   }
@@ -1307,9 +1243,6 @@ pre {
   }
   .signout {
     margin: 0;
-  }
-  .topbar {
-    display: none;
   }
   main {
     padding: 25px 18px 40px;
@@ -1460,14 +1393,8 @@ pre {
     margin: 15px 0;
     letter-spacing: -1px;
   }
-  .login-intro .login-overline,
-  .login-intro small,
   .desk-illustration {
     display: none;
-  }
-  .login-intro p {
-    margin-bottom: 0;
-    font-size: 12px;
   }
   .login-form-wrap {
     padding: 35px 25px;

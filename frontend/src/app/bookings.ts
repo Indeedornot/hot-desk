@@ -1,4 +1,6 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, timer } from 'rxjs';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -12,7 +14,7 @@ import { Availability, Booking, Desk, Page } from './models';
     <div class="page-heading">
       <div>
         <p class="breadcrumb">Workspace / Reservations</p>
-        <h1>Your working days.</h1>
+        <h1>My reservations</h1>
         <p class="muted">Check in when you arrive. Free up your seat when you leave.</p>
       </div>
       <a class="button primary" routerLink="/desks">Find a desk</a>
@@ -59,8 +61,8 @@ import { Availability, Booking, Desk, Page } from './models';
               }}</span>
             </div>
             <div class="booking-actions">
-              @if (booking.status === 'BOOKED' && !booking.elapsed) {
-                @if (booking.date === today(booking)) {
+              @if (booking.status === 'BOOKED' && !hasEnded(booking)) {
+                @if (hasStarted(booking)) {
                   <button
                     class="button primary"
                     [disabled]="busy()"
@@ -68,6 +70,11 @@ import { Availability, Booking, Desk, Page } from './models';
                   >
                     Check in
                   </button>
+                } @else {
+                  <small
+                    >Check-in opens {{ booking.startsAt | date: 'd MMM, HH:mm' }} (local
+                    time)</small
+                  >
                 }
                 <button class="button secondary" [disabled]="busy()" (click)="edit(booking)">
                   Edit</button
@@ -139,6 +146,7 @@ import { Availability, Booking, Desk, Page } from './models';
 })
 export class BookingsPage implements OnInit {
   private readonly api = inject(ApiService);
+  readonly now = toSignal(timer(0, 1000).pipe(map(() => Date.now())), { initialValue: Date.now() });
   readonly result = signal<Page<Booking> | null>(null);
   readonly loading = signal(true);
   readonly busy = signal(false);
@@ -159,8 +167,14 @@ export class BookingsPage implements OnInit {
   tomorrow(booking: Booking): string {
     return officeDate(booking.timezone, 1);
   }
+  hasStarted(booking: Booking): boolean {
+    return this.now() >= Date.parse(booking.startsAt);
+  }
+  hasEnded(booking: Booking): boolean {
+    return this.now() >= Date.parse(booking.endsAt);
+  }
   label(booking: Booking): string {
-    if (booking.elapsed && booking.status === 'BOOKED') return 'Elapsed';
+    if (this.hasEnded(booking) && booking.status === 'BOOKED') return 'Elapsed';
     return {
       BOOKED: 'Reserved',
       CHECKED_IN: 'Checked in',
@@ -193,7 +207,7 @@ export class BookingsPage implements OnInit {
       await this.api.request('POST', `/bookings/${booking.id}/${action}`, {});
       this.notice.set(
         action === 'check-in'
-          ? 'You’re checked in. Have a good working day.'
+          ? 'You’re checked in.'
           : action === 'check-out'
             ? 'You’re checked out. Your desk is available again.'
             : 'Reservation cancelled.',

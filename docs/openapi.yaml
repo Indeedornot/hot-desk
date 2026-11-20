@@ -1393,6 +1393,12 @@ components:
           type: string
           format: date-time
           nullable: false
+        startsAt:
+          type: string
+          format: date-time
+        endsAt:
+          type: string
+          format: date-time
         checkedInAt:
           type: string
           format: date-time

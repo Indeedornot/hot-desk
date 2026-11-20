@@ -12,7 +12,7 @@ import { AuditEvent, Page } from './models';
     <div class="page-heading">
       <div>
         <p class="breadcrumb">{{ admin ? 'Administration' : 'Workspace' }} / Activity</p>
-        <h1>{{ admin ? 'The workspace record.' : 'Your activity.' }}</h1>
+        <h1>{{ admin ? 'Event history' : 'My activity' }}</h1>
         <p class="muted">Reservations, arrivals and departures, in one timeline.</p>
       </div>
     </div>

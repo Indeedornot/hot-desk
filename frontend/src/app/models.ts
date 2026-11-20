@@ -42,6 +42,8 @@ export interface Booking {
   officeName: string;
   timezone: string;
   date: string;
+  startsAt: string;
+  endsAt: string;
   status: 'BOOKED' | 'CHECKED_IN' | 'CHECKED_OUT' | 'CANCELLED';
   elapsed: boolean;
   createdAt: string;

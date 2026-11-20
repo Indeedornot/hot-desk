@@ -37,9 +37,6 @@ import { errorMessage } from './api.service';
             }
           </nav>
           <div class="sidebar-bottom">
-            <div class="office-note">
-              <span class="status-dot"></span>A little space to do your best work.
-            </div>
             <div class="account">
               <span class="avatar">{{ user.name.slice(0, 1) }}</span>
               <div>
@@ -55,10 +52,6 @@ import { errorMessage } from './api.service';
           </div>
         </aside>
         <div class="main-column">
-          <header class="topbar">
-            <span>Space for a good working day</span
-            ><span class="topbar-right"><span class="status-dot"></span>Office workspace</span>
-          </header>
           <main><router-outlet /></main>
         </div>
       </div>

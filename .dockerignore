@@ -1,0 +1,13 @@
+.git
+.local
+.env.local
+.env.*.local
+vendor
+var
+frontend/node_modules
+frontend/.angular
+frontend/dist
+public/app
+config/reference.php
+*.pdf
+.compose.env
