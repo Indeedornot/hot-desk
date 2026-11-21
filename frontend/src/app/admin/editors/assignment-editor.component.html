@@ -1,0 +1,29 @@
+<form class="admin-form" (ngSubmit)="save()">
+  <label>
+    Person
+    <select name="person" [(ngModel)]="draft.userId" required>
+      <option [ngValue]="0" disabled>Choose a person</option>
+      @for (user of people; track user.id) {
+        @if (user.active) {
+          <option [ngValue]="user.id">{{ user.name }} ({{ user.email }})</option>
+        }
+      }
+    </select>
+  </label>
+  <label>
+    Permanent desk
+    <select name="desk" [(ngModel)]="draft.deskId" required>
+      <option [ngValue]="0" disabled>Choose a desk</option>
+      @for (desk of desks; track desk.id) {
+        @if (desk.active) {
+          <option [ngValue]="desk.id">{{ desk.label }} — {{ desk.officeName }}</option>
+        }
+      }
+    </select>
+  </label>
+  <p class="info-box wide-field">
+    This person will only be able to reserve the assigned desk. Other people cannot reserve it until
+    you remove the assignment. Existing reservations remain unchanged.
+  </p>
+  <ng-content />
+</form>

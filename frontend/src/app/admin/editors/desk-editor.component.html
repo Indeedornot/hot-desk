@@ -1,0 +1,37 @@
+<form class="admin-form" (ngSubmit)="saved.emit(draft)">
+  <label>
+    Office
+    <select name="office" [(ngModel)]="draft.officeId" required>
+      <option [ngValue]="0" disabled>Choose an office</option>
+      @for (office of offices; track office.id) {
+        <option [ngValue]="office.id">{{ office.name }}</option>
+      }
+    </select>
+  </label>
+  <label>
+    Desk label
+    <input name="label" [(ngModel)]="draft.label" required maxlength="40" placeholder="A01" />
+  </label>
+  <label class="wide-field">
+    Equipment
+    <input
+      name="equipment"
+      [(ngModel)]="draft.equipment"
+      maxlength="255"
+      placeholder="Monitor, USB-C, adjustable desk"
+    />
+  </label>
+  <label>
+    Map column (0–9)
+    <input name="x" type="number" min="0" max="9" [(ngModel)]="draft.x" required />
+  </label>
+  <label>
+    Map row (0–9)
+    <input name="y" type="number" min="0" max="9" [(ngModel)]="draft.y" required />
+  </label>
+  <label class="checkbox-label">
+    <input type="checkbox" name="active" [(ngModel)]="draft.active" />
+    Active desk
+  </label>
+  <ng-content />
+</form>

@@ -1,0 +1,27 @@
+<form class="admin-form" (ngSubmit)="saved.emit(draft)">
+  <label>
+    Name
+    <input name="name" [(ngModel)]="draft.name" required maxlength="100" />
+  </label>
+  <label>
+    Address
+    <input name="address" [(ngModel)]="draft.address" required maxlength="255" />
+  </label>
+  <label>
+    Timezone
+    <input name="timezone" [(ngModel)]="draft.timezone" required placeholder="Europe/Warsaw" />
+  </label>
+  <label>
+    Opening time
+    <input type="time" name="opening" [(ngModel)]="draft.openingTime" required />
+  </label>
+  <label>
+    Closing time
+    <input type="time" name="closing" [(ngModel)]="draft.closingTime" required />
+  </label>
+  <label class="checkbox-label">
+    <input type="checkbox" name="active" [(ngModel)]="draft.active" />
+    Active office
+  </label>
+  <ng-content />
+</form>

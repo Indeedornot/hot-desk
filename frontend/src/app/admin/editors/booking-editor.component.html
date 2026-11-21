@@ -1,0 +1,15 @@
+<form class="admin-form" (ngSubmit)="saved.emit(draft)">
+  <label>
+    Day
+    <input name="date" type="date" [(ngModel)]="draft.date" required />
+  </label>
+  <label>
+    Desk
+    <select name="desk" [(ngModel)]="draft.deskId" required>
+      @for (desk of desks; track desk.id) {
+        <option [ngValue]="desk.id">{{ desk.label }} — {{ desk.officeName }}</option>
+      }
+    </select>
+  </label>
+  <ng-content />
+</form>

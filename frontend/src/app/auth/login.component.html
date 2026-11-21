@@ -1,0 +1,48 @@
+<div class="login-page">
+  <section class="login-intro">
+    <div class="brand light">hot desk.</div>
+    <div>
+      <h1>Office desk booking</h1>
+      <div class="desk-illustration" aria-hidden="true">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </div>
+  </section>
+  <section class="login-form-wrap">
+    <form class="login-form" (ngSubmit)="submit()">
+      <h2>Sign in</h2>
+      <p class="muted">Sign in with the account provided by your office administrator.</p>
+      <label>
+        Email address
+        <input
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          autocomplete="username"
+          required
+          placeholder="you@company.com"
+        />
+      </label>
+      <label>
+        Password
+        <input
+          type="password"
+          name="password"
+          [(ngModel)]="password"
+          autocomplete="current-password"
+          required
+        />
+      </label>
+      @if (error()) {
+        <p class="error-box" role="alert">{{ error() }}</p>
+      }
+      <button class="button primary full-width" [disabled]="signingIn()">
+        {{ signingIn() ? 'Signing in…' : 'Sign in' }}
+      </button>
+      <p class="login-help">Need an account? Contact your office administrator.</p>
+    </form>
+  </section>
+</div>

@@ -1,16 +1,16 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { ApiService } from './api.service';
-import { User } from './models';
+import { ApiService } from '../shared/api.service';
+import { User } from '../shared/models';
 
 @Injectable({ providedIn: 'root' })
 export class SessionService {
   private readonly api = inject(ApiService);
   private readonly router = inject(Router);
-  readonly user = signal<User | null>(null);
+  public readonly user = signal<User | null>(null);
   private initialized: Promise<void> | null = null;
 
-  initialize(): Promise<void> {
+  public initialize(): Promise<void> {
     return (this.initialized ??= this.load());
   }
 
@@ -24,7 +24,7 @@ export class SessionService {
     }
   }
 
-  async login(email: string, password: string): Promise<void> {
+  public async login(email: string, password: string): Promise<void> {
     await this.api.refreshCsrf();
     const result = await this.api.request<{ user: User; csrfToken: string }>(
       'POST',
@@ -38,7 +38,7 @@ export class SessionService {
     this.api.csrfToken = result.csrfToken;
   }
 
-  async logout(): Promise<void> {
+  public async logout(): Promise<void> {
     await this.api.request('POST', '/auth/logout', {});
     this.user.set(null);
     this.api.csrfToken = '';

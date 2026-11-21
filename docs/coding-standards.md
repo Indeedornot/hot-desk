@@ -3,6 +3,11 @@
 PHP uses strict types and the Symfony ruleset enforced by PHP-CS-Fixer.
 Angular uses strict TypeScript, standalone components, typed HTTP responses
 and Prettier. Use two spaces for frontend/configuration files and four for PHP.
+Use braces for every TypeScript conditional branch, even a single return.
+Use straight apostrophes and let Prettier wrap templates and expressions.
+Use matching `.component.ts` and `.component.html` names. Keep components and
+feature-specific services in the same feature folder. Declare class members with
+explicit visibility. Component fields and methods used in templates are public.
 
 Controllers handle HTTP mapping. Services enforce business rules and transaction
 boundaries. Repositories contain database queries. Request DTOs validate input;

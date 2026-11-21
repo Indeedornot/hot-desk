@@ -5,9 +5,9 @@ import { firstValueFrom } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
-  csrfToken = '';
+  public csrfToken = '';
 
-  async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  public async request<T>(method: string, path: string, body?: unknown): Promise<T> {
     return firstValueFrom(
       this.http.request<T>(method, '/api' + path, {
         body,
@@ -25,11 +25,11 @@ export class ApiService {
     });
   }
 
-  get<T>(path: string): Promise<T> {
+  public get<T>(path: string): Promise<T> {
     return this.request<T>('GET', path);
   }
 
-  async refreshCsrf(): Promise<void> {
+  public async refreshCsrf(): Promise<void> {
     const result = await this.get<{ csrfToken: string }>('/auth/csrf');
     this.csrfToken = result.csrfToken;
   }

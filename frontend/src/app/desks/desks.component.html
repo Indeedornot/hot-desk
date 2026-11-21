@@ -4,18 +4,21 @@
     <h1>Find a desk</h1>
     <p class="muted">Reserve a desk for today or tomorrow.</p>
   </div>
-  <a class="button secondary" routerLink="/bookings"
-    >My reservations <span aria-hidden="true">↗</span></a
-  >
+  <a class="button secondary" routerLink="/bookings">
+    My reservations
+    <span aria-hidden="true">↗</span>
+  </a>
 </div>
 @if (error()) {
   <div class="error-box" role="alert">
-    {{ error() }} <button class="text-button" (click)="load()">Try again</button>
+    {{ error() }}
+    <button class="text-button" (click)="load()">Try again</button>
   </div>
 }
 @if (notice()) {
   <div class="success-box" role="status">
-    {{ notice() }} <a routerLink="/bookings">View reservation</a>
+    {{ notice() }}
+    <a routerLink="/bookings">View reservation</a>
   </div>
 }
 @if (!loading() && !offices().length) {
@@ -26,24 +29,24 @@
 }
 @if (offices().length) {
   <section class="workspace-toolbar" aria-label="Desk filters">
-    <label class="office-picker"
-      >Office<select name="office" [(ngModel)]="officeId" (ngModelChange)="load()">
+    <label class="office-picker">
+      Office
+      <select name="office" [(ngModel)]="officeId" (ngModelChange)="load()">
         @for (office of offices(); track office.id) {
           <option [ngValue]="office.id">{{ office.name }}</option>
         }
-      </select></label
-    >
+      </select>
+    </label>
     <div class="day-picker">
       <span>When are you coming in?</span>
       <div class="segmented">
-        <button [class.selected]="day === 0" (click)="day = 0; load()">Today</button
-        ><button [class.selected]="day === 1" (click)="day = 1; load()">Tomorrow</button>
+        <button [class.selected]="day === 0" (click)="day = 0; load()">Today</button>
+        <button [class.selected]="day === 1" (click)="day = 1; load()">Tomorrow</button>
       </div>
     </div>
     <div class="date-label">
-      <strong>{{ date | date: 'EEEE, d MMM' }}</strong><small
-        >{{ office?.openingTime }}–{{ office?.closingTime }} · {{ office?.timezone }}</small
-      >
+      <strong>{{ date | date: 'EEEE, d MMM' }}</strong>
+      <small>{{ office?.openingTime }}–{{ office?.closingTime }} · {{ office?.timezone }}</small>
     </div>
   </section>
   @if (data()?.assignedSeat; as seat) {
@@ -64,27 +67,38 @@
         <div>
           <h2>Desk availability</h2>
           <p>
-            <span class="status-dot"></span>{{ available() }} desks available
+            <span class="status-dot"></span>
+            {{ available() }} desks available
             <span class="muted">of {{ data()?.items?.length ?? 0 }}</span>
           </p>
         </div>
         <div class="segmented compact">
-          <button [class.selected]="view === 'map'" (click)="view = 'map'">Map</button
-          ><button [class.selected]="view === 'list'" (click)="view = 'list'">List</button>
+          <button [class.selected]="view === 'map'" (click)="view = 'map'">Map</button>
+          <button [class.selected]="view === 'list'" (click)="view = 'list'">List</button>
         </div>
       </div>
       <div class="map-tools">
-        <label class="search-input"
-          ><span aria-hidden="true">⌕</span
-          ><input
+        <label class="search-input">
+          <span aria-hidden="true">⌕</span>
+          <input
             aria-label="Search desks or equipment"
             [(ngModel)]="search"
             placeholder="Find a desk or equipment"
-        /></label>
+          />
+        </label>
         <div class="legend">
-          <span><i class="legend-dot free"></i>Available</span
-          ><span><i class="legend-dot taken"></i>Reserved</span
-          ><span><i class="legend-dot assigned"></i>Assigned</span>
+          <span>
+            <i class="legend-dot free"></i>
+            Available
+          </span>
+          <span>
+            <i class="legend-dot taken"></i>
+            Reserved
+          </span>
+          <span>
+            <i class="legend-dot assigned"></i>
+            Assigned
+          </span>
         </div>
       </div>
       @if (loading()) {
@@ -97,8 +111,16 @@
       } @else if (view === 'map') {
         <div class="floor-scroll">
           <div class="floor-plan">
-            <div class="windows"><span></span><span></span><span></span><span></span></div>
-            <div class="room-label">Open workspace <span>Windows</span></div>
+            <div class="windows">
+              <span></span>
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <div class="room-label">
+              Open workspace
+              <span>Windows</span>
+            </div>
             <div class="desk-grid" [style.grid-template-columns]="columns">
               @for (desk of desks; track desk.id) {
                 <button
@@ -114,18 +136,23 @@
                     'Desk ' + desk.label + ', ' + (desk.available ? 'available' : desk.state)
                   "
                 >
-                  <span class="monitor" aria-hidden="true"></span><strong>{{ desk.label }}</strong
-                  ><small>{{
-                    desk.myBookingId ? 'Your desk' : desk.available ? 'Available' : desk.state
-                  }}</small
-                  ><span class="chair" aria-hidden="true"></span>
+                  <span class="monitor" aria-hidden="true"></span>
+                  <strong>{{ desk.label }}</strong>
+                  <small>
+                    {{ desk.myBookingId ? 'Your desk' : desk.available ? 'Available' : desk.state }}
+                  </small>
+                  <span class="chair" aria-hidden="true"></span>
                 </button>
               }
             </div>
             <div class="room-bottom">
-              <span class="plant" aria-hidden="true">✳</span><span>Entrance</span
-              ><span class="door" aria-hidden="true"></span
-              ><span class="room-lounge">Breakout area <span aria-hidden="true">▱ ▱</span></span>
+              <span class="plant" aria-hidden="true">✳</span>
+              <span>Entrance</span>
+              <span class="door" aria-hidden="true"></span>
+              <span class="room-lounge">
+                Breakout area
+                <span aria-hidden="true">▱ ▱</span>
+              </span>
             </div>
           </div>
         </div>
@@ -137,10 +164,11 @@
               [class.chosen]="selected()?.id === desk.id"
               (click)="select(desk)"
             >
-              <strong>{{ desk.label }}</strong><span>{{ desk.equipment }}</span
-              ><span class="badge" [class.green]="desk.available">{{
-                desk.available ? 'Available' : desk.state
-              }}</span>
+              <strong>{{ desk.label }}</strong>
+              <span>{{ desk.equipment }}</span>
+              <span class="badge" [class.green]="desk.available">
+                {{ desk.available ? 'Available' : desk.state }}
+              </span>
             </button>
           }
         </div>
@@ -150,13 +178,14 @@
     <aside class="reservation-panel">
       @if (selected(); as desk) {
         <div class="selection-title">
-          <span class="desk-symbol" aria-hidden="true">▤</span><span>Selected desk</span>
+          <span class="desk-symbol" aria-hidden="true">▤</span>
+          <span>Selected desk</span>
         </div>
         <h2 class="desk-number">{{ desk.label }}</h2>
         <p class="muted">{{ office?.name }}</p>
-        <span class="badge" [class.green]="desk.available">{{
-          desk.available ? 'Available for your day' : desk.state
-        }}</span>
+        <span class="badge" [class.green]="desk.available">
+          {{ desk.available ? 'Available for your day' : desk.state }}
+        </span>
         <hr />
         <dl class="detail-list">
           <div>
@@ -181,10 +210,10 @@
         }
         <button
           class="button primary full-width"
-          [disabled]="!desk.available || busy()"
+          [disabled]="!desk.available || reserving()"
           (click)="book()"
         >
-          {{ busy() ? 'Reserving…' : 'Reserve ' + desk.label }}
+          {{ reserving() ? 'Reserving…' : 'Reserve ' + desk.label }}
         </button>
         @if (desk.myBookingId) {
           <a class="button secondary full-width" routerLink="/bookings">Manage this reservation</a>

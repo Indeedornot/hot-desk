@@ -1,0 +1,140 @@
+<div class="page-heading">
+  <div>
+    <p class="breadcrumb">Workspace / Reservations</p>
+    <h1>My reservations</h1>
+    <p class="muted">Check in when you arrive. Free up your seat when you leave.</p>
+  </div>
+  <a class="button primary" routerLink="/desks">Find a desk</a>
+</div>
+@if (error()) {
+  <p class="error-box" role="alert">{{ error() }}</p>
+}
+@if (notice()) {
+  <p class="success-box" role="status">{{ notice() }}</p>
+}
+<div class="list-toolbar">
+  <label>
+    Status
+    <select [(ngModel)]="filters.status" (ngModelChange)="filters.page = 1; load()">
+      <option value="">All reservations</option>
+      <option value="BOOKED">Reserved</option>
+      <option value="CHECKED_IN">Checked in</option>
+      <option value="CHECKED_OUT">Checked out</option>
+      <option value="CANCELLED">Cancelled</option>
+    </select>
+  </label>
+  <button class="button secondary" (click)="load()">Refresh</button>
+</div>
+@if (loading()) {
+  <div class="empty-state" role="status">Loading reservations…</div>
+} @else if (!result()?.items?.length) {
+  <div class="empty-state">
+    <h2>No reservations here yet</h2>
+    <p>Your next working day starts with a desk.</p>
+    <a class="button primary" routerLink="/desks">Choose your desk</a>
+  </div>
+} @else {
+  <div class="booking-list">
+    @for (booking of result()!.items; track booking.id) {
+      <article class="booking-card">
+        <div class="booking-date">
+          <strong>{{ booking.date | date: 'dd' }}</strong>
+          <span>{{ booking.date | date: 'MMM' }}</span>
+        </div>
+        <div class="booking-info">
+          <h2>Desk {{ booking.deskLabel }}</h2>
+          <p>{{ booking.officeName }}</p>
+          <span class="badge" [class.green]="booking.status === 'CHECKED_IN'">
+            {{ label(booking) }}
+          </span>
+        </div>
+        <div class="booking-actions">
+          @if (booking.status === 'BOOKED' && !hasEnded(booking)) {
+            @if (hasStarted(booking)) {
+              <button
+                class="button primary"
+                [disabled]="saving()"
+                (click)="act(booking, 'check-in')"
+              >
+                Check in
+              </button>
+            } @else {
+              <small>
+                Check-in opens {{ booking.startsAt | date: 'd MMM, HH:mm' }} (local time)
+              </small>
+            }
+            <button class="button secondary" [disabled]="saving()" (click)="edit(booking)">
+              Edit
+            </button>
+            <button
+              class="text-button danger"
+              [disabled]="saving()"
+              (click)="act(booking, 'cancel')"
+            >
+              Cancel
+            </button>
+          }
+          @if (booking.status === 'CHECKED_IN') {
+            <button
+              class="button primary"
+              [disabled]="saving()"
+              (click)="act(booking, 'check-out')"
+            >
+              Check out
+            </button>
+          }
+          <a
+            class="text-button"
+            [routerLink]="['/activity']"
+            [queryParams]="{ bookingId: booking.id }"
+          >
+            View activity
+          </a>
+        </div>
+        @if (editing() === booking.id) {
+          <form class="booking-edit" (ngSubmit)="saveEdit(booking)">
+            <label>
+              Day
+              <select
+                name="editDay"
+                [(ngModel)]="editDraft.date"
+                (ngModelChange)="loadEditDesks(booking)"
+              >
+                <option [value]="today(booking)">Today</option>
+                <option [value]="tomorrow(booking)">Tomorrow</option>
+              </select>
+            </label>
+            <label>
+              Desk
+              <select name="editDesk" [(ngModel)]="editDraft.deskId">
+                @for (desk of editDesks(); track desk.id) {
+                  <option [ngValue]="desk.id">{{ desk.label }}</option>
+                }
+              </select>
+            </label>
+            <button class="button primary" [disabled]="saving()">Save changes</button>
+            <button type="button" class="text-button" (click)="editing.set(null)">Close</button>
+          </form>
+        }
+      </article>
+    }
+  </div>
+  <div class="pagination">
+    <span>{{ result()!.total }} reservations</span>
+    <button
+      class="button secondary"
+      [disabled]="filters.page === 1"
+      (click)="filters.page = filters.page - 1; load()"
+    >
+      Previous
+    </button>
+    <span>Page {{ filters.page }}</span>
+    <button
+      class="button secondary"
+      [disabled]="filters.page * 10 >= result()!.total"
+      (click)="filters.page = filters.page + 1; load()"
+    >
+      Next
+    </button>
+  </div>
+}
