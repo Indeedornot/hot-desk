@@ -26,6 +26,7 @@
     "@angular/cli": "^21.2.29",
     "@angular/compiler-cli": "^21.2.0",
     "prettier": "^3.10.0",
+    "swagger-ui-dist": "5.35.1",
     "typescript": "~5.9.2"
   }
 }

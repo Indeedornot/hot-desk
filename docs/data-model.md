@@ -1,5 +1,9 @@
 # Data model
 
+![Hot Desk entity relationship diagram](erd.svg)
+
+The same relationships are listed below in editable Mermaid form.
+
 ```mermaid
 erDiagram
     APP_USER ||--o{ BOOKING : reserves
@@ -51,8 +55,8 @@ erDiagram
     }
     SEAT_ASSIGNMENT {
         int id PK
-        int user_id FK,UK
-        int desk_id FK,UK
+        int user_id FK, UK
+        int desk_id FK, UK
         int assigned_by_id FK
         timestamptz created_at
     }
@@ -68,6 +72,11 @@ erDiagram
 
 `desk(office_id, label)` is unique. Partial indexes on `booking(desk_id, date)`
 and `booking(user_id, date)` are unique while status is `BOOKED` or `CHECKED_IN`.
+The unique foreign keys on `seat_assignment.user_id` and `seat_assignment.desk_id`
+allow at most one permanent seat per member and one member per permanent seat.
+
+`audit_event.actor_id` is a foreign key to `app_user`. Other IDs mentioned in
+`event_data` are JSONB snapshots, so they do not appear as foreign-key edges.
 The reserved date is a calendar date in the office timezone. The start/end
 instants capture that day's office hours for overlap checks and history.
 

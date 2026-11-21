@@ -12,7 +12,8 @@ Aim for 3–5 minutes. Start the Compose stack before recording. Use the generat
    another desk and that other members cannot reserve the assigned desk.
 5. Remove the assignment. Show the searchable administrative event history and
    the confirmation email in Mailpit.
-6. Briefly show the controller → DTO → service → repository flow, the ERD,
+6. In Swagger UI, run GET /offices and show the HTTP 200 response.
+7. Briefly show the controller → DTO → service → repository flow, the ERD,
    transactional audit/queue writes, and a passing test run.
 
 Before recording, cancel leftover demo reservations and remove temporary

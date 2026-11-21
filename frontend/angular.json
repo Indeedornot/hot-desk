@@ -49,6 +49,11 @@
               {
                 "glob": "**/*",
                 "input": "public"
+              },
+              {
+                "glob": "{swagger-ui.css,swagger-ui-bundle.js,LICENSE,NOTICE}",
+                "input": "node_modules/swagger-ui-dist",
+                "output": "/swagger"
               }
             ],
             "styles": ["src/styles.scss"],

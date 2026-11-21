@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1350 960" width="1350" height="960" role="img" aria-labelledby="title desc">
+  <title id="title">Hot Desk entity relationship diagram</title>
+  <desc id="desc">Six PostgreSQL business tables, their keys, and seven foreign key relationships. Arrows point from referenced tables to dependent tables.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">
+      <path d="M0 0L9 4.5L0 9Z" fill="#49745f"/>
+    </marker>
+  </defs>
+  <style>
+    .heading,.title,.legend,.edge-label {font-family: system-ui, sans-serif}
+    .heading {font-size:32px;font-weight:700;fill:#173d2d}
+    .legend {font-size:15px;fill:#465a51}
+    .title {font-size:20px;font-weight:700;fill:white}
+    .field {font:16px monospace;fill:#20362c;white-space:pre}
+    .key {font-weight:bold;fill:#26714e}
+    .edge {fill:none;stroke:#49745f;stroke-width:2;marker-end:url(#arrow)}
+    .edge-label {font-size:15px;font-weight:600;fill:#234c39;paint-order:stroke;stroke:#f6f8f5;stroke-width:7;stroke-linejoin:round}
+  </style>
+  <rect width="1350" height="960" rx="16" fill="#f6f8f5"/>
+  <text class="heading" x="45" y="54">Hot Desk data model</text>
+  <text class="legend" x="47" y="81">PostgreSQL business tables · arrows run from parent to dependent table</text>
+  <path class="edge" d="M 190 666 V 530"/>
+  <text class="edge-label" x="206" y="590">1 → 0..*  office_id</text>
+  <path class="edge" d="M 335 376 H 423 V 237 H 525"/>
+  <text class="edge-label" x="389" y="224">1 → 0..*  desk_id</text>
+  <path class="edge" d="M 1015 376 H 925 V 237 H 825"/>
+  <text class="edge-label" x="837" y="224">1 → 0..*  user_id</text>
+  <path class="edge" d="M 335 471 H 423 V 723 H 525"/>
+  <text class="edge-label" x="346" y="610">1 → 0..1  desk_id</text>
+  <path class="edge" d="M 1015 453 H 923 V 692 H 825"/>
+  <text class="edge-label" x="832" y="678">1 → 0..1  user_id</text>
+  <path class="edge" d="M 1015 495 H 972 V 774 H 825"/>
+  <text class="edge-label" x="836" y="762">1 → 0..*  assigned_by_id</text>
+  <path class="edge" d="M 1158 530 V 666"/>
+  <text class="edge-label" x="1173" y="590">1 → 0..*  actor_id</text>
+  <g id="desk">
+    <rect x="45" y="332" width="290" height="199" rx="8" fill="white" stroke="#b9cbc0"/>
+    <path d="M53 332 H327 Q335 332 335 340 V373 H45 V340 Q45 332 53 332 Z" fill="#245640"/>
+    <text class="title" x="61" y="359">desk</text>
+    <text class="field" x="61" y="397"><tspan class="key">PK</tspan><tspan x="101">id</tspan></text>
+    <text class="field" x="61" y="421"><tspan class="key">FK</tspan><tspan x="101">office_id</tspan></text>
+    <text class="field" x="61" y="445"><tspan class="key">  </tspan><tspan x="101">label</tspan></text>
+    <text class="field" x="61" y="469"><tspan class="key">  </tspan><tspan x="101">equipment</tspan></text>
+    <text class="field" x="61" y="493"><tspan class="key">  </tspan><tspan x="101">x, y</tspan></text>
+    <text class="field" x="61" y="517"><tspan class="key">  </tspan><tspan x="101">active</tspan></text>
+  </g>
+  <g id="office">
+    <rect x="45" y="666" width="290" height="223" rx="8" fill="white" stroke="#b9cbc0"/>
+    <path d="M53 666 H327 Q335 666 335 674 V707 H45 V674 Q45 666 53 666 Z" fill="#245640"/>
+    <text class="title" x="61" y="693">office</text>
+    <text class="field" x="61" y="731"><tspan class="key">PK</tspan><tspan x="101">id</tspan></text>
+    <text class="field" x="61" y="755"><tspan class="key">  </tspan><tspan x="101">name</tspan></text>
+    <text class="field" x="61" y="779"><tspan class="key">  </tspan><tspan x="101">address</tspan></text>
+    <text class="field" x="61" y="803"><tspan class="key">  </tspan><tspan x="101">timezone</tspan></text>
+    <text class="field" x="61" y="827"><tspan class="key">  </tspan><tspan x="101">opening_time</tspan></text>
+    <text class="field" x="61" y="851"><tspan class="key">  </tspan><tspan x="101">closing_time</tspan></text>
+    <text class="field" x="61" y="875"><tspan class="key">  </tspan><tspan x="101">active</tspan></text>
+  </g>
+  <g id="booking">
+    <rect x="525" y="105" width="300" height="295" rx="8" fill="white" stroke="#b9cbc0"/>
+    <path d="M533 105 H817 Q825 105 825 113 V146 H525 V113 Q525 105 533 105 Z" fill="#245640"/>
+    <text class="title" x="541" y="132">booking</text>
+    <text class="field" x="541" y="170"><tspan class="key">PK</tspan><tspan x="581">id</tspan></text>
+    <text class="field" x="541" y="194"><tspan class="key">FK</tspan><tspan x="581">user_id</tspan></text>
+    <text class="field" x="541" y="218"><tspan class="key">FK</tspan><tspan x="581">desk_id</tspan></text>
+    <text class="field" x="541" y="242"><tspan class="key">  </tspan><tspan x="581">date</tspan></text>
+    <text class="field" x="541" y="266"><tspan class="key">  </tspan><tspan x="581">starts_at, ends_at</tspan></text>
+    <text class="field" x="541" y="290"><tspan class="key">  </tspan><tspan x="581">status</tspan></text>
+    <text class="field" x="541" y="314"><tspan class="key">  </tspan><tspan x="581">created_at</tspan></text>
+    <text class="field" x="541" y="338"><tspan class="key">  </tspan><tspan x="581">checked_in_at</tspan></text>
+    <text class="field" x="541" y="362"><tspan class="key">  </tspan><tspan x="581">checked_out_at</tspan></text>
+    <text class="field" x="541" y="386"><tspan class="key">  </tspan><tspan x="581">cancelled_at</tspan></text>
+  </g>
+  <g id="seat_assignment">
+    <rect x="525" y="652" width="300" height="175" rx="8" fill="white" stroke="#b9cbc0"/>
+    <path d="M533 652 H817 Q825 652 825 660 V693 H525 V660 Q525 652 533 652 Z" fill="#245640"/>
+    <text class="title" x="541" y="679">seat_assignment</text>
+    <text class="field" x="541" y="717"><tspan class="key">PK</tspan><tspan x="581">id</tspan></text>
+    <text class="field" x="541" y="741"><tspan class="key">FK</tspan><tspan x="581">user_id  [unique]</tspan></text>
+    <text class="field" x="541" y="765"><tspan class="key">FK</tspan><tspan x="581">desk_id  [unique]</tspan></text>
+    <text class="field" x="541" y="789"><tspan class="key">FK</tspan><tspan x="581">assigned_by_id</tspan></text>
+    <text class="field" x="541" y="813"><tspan class="key">  </tspan><tspan x="581">created_at</tspan></text>
+  </g>
+  <g id="app_user">
+    <rect x="1015" y="332" width="290" height="199" rx="8" fill="white" stroke="#b9cbc0"/>
+    <path d="M1023 332 H1297 Q1305 332 1305 340 V373 H1015 V340 Q1015 332 1023 332 Z" fill="#245640"/>
+    <text class="title" x="1031" y="359">app_user</text>
+    <text class="field" x="1031" y="397"><tspan class="key">PK</tspan><tspan x="1071">id</tspan></text>
+    <text class="field" x="1031" y="421"><tspan class="key">UQ</tspan><tspan x="1071">email</tspan></text>
+    <text class="field" x="1031" y="445"><tspan class="key">  </tspan><tspan x="1071">name</tspan></text>
+    <text class="field" x="1031" y="469"><tspan class="key">  </tspan><tspan x="1071">password (hash)</tspan></text>
+    <text class="field" x="1031" y="493"><tspan class="key">  </tspan><tspan x="1071">role</tspan></text>
+    <text class="field" x="1031" y="517"><tspan class="key">  </tspan><tspan x="1071">active</tspan></text>
+  </g>
+  <g id="audit_event">
+    <rect x="1015" y="666" width="290" height="199" rx="8" fill="white" stroke="#b9cbc0"/>
+    <path d="M1023 666 H1297 Q1305 666 1305 674 V707 H1015 V674 Q1015 666 1023 666 Z" fill="#245640"/>
+    <text class="title" x="1031" y="693">audit_event</text>
+    <text class="field" x="1031" y="731"><tspan class="key">PK</tspan><tspan x="1071">id</tspan></text>
+    <text class="field" x="1031" y="755"><tspan class="key">FK</tspan><tspan x="1071">actor_id</tspan></text>
+    <text class="field" x="1031" y="779"><tspan class="key">  </tspan><tspan x="1071">event_name</tspan></text>
+    <text class="field" x="1031" y="803"><tspan class="key">  </tspan><tspan x="1071">event_date</tspan></text>
+    <text class="field" x="1031" y="827"><tspan class="key">  </tspan><tspan x="1071">event_type</tspan></text>
+    <text class="field" x="1031" y="851"><tspan class="key">  </tspan><tspan x="1071">event_data (JSONB)</tspan></text>
+  </g>
+  <text class="legend" x="45" y="930">PK primary key · FK foreign key · UQ unique · 0..1 optional one · 0..* optional many</text>
+</svg>

@@ -1,130 +1,129 @@
 # Hot Desk
 
-Office desk reservations with permanent seat assignments and attendance history.
-Built with Angular 21, Symfony 7.4 / PHP 8.3, Doctrine ORM and PostgreSQL 18.
-Symfony Messenger handles booking emails asynchronously.
+Hot Desk is an office desk booking app. Team members use a desk map to find a
+workspace, reserve it, and check in and out. Administrators manage the office
+layout, accounts, and permanent seat assignments.
 
-## Run with Docker Compose
+| Team member | Administrator |
+| --- | --- |
+| Find a desk by office, date, or equipment | Create and edit offices, desks, and accounts |
+| Reserve, edit, or cancel a booking | Assign a permanent desk to a member and remove the assignment |
+| Check in, check out, and view personal activity | Review reservations and filter the audit log |
 
-From a fresh clone, with Docker and the Compose plugin installed, run:
+## Run locally
+
+Install Docker with the Compose plugin and OpenSSL. From the repository root,
+create the local environment file **once**:
 
 ```sh
 (umask 077
   printf 'HOT_DESK_APP_SECRET=%s\n' "$(openssl rand -hex 32)"
   printf 'HOT_DESK_DB_PASSWORD=%s\n' "$(openssl rand -hex 24)"
 ) > .compose.env
-docker compose --env-file .compose.env up --build -d
 ```
 
-Generate `.compose.env` once and keep it for subsequent runs. The password is
-used to initialize PostgreSQL. The file is ignored by Git.
+Keep this file for subsequent runs because its password initializes the
+PostgreSQL volume. Git ignores the file. Build and start the app:
 
-Open <http://localhost:8080>. Compose builds Angular and the Symfony backend,
-migrates PostgreSQL and seeds a demo office on first boot. It also runs the
-notification worker. To retrieve the generated demo credentials, run:
+```sh
+docker compose --env-file .compose.env up --build -d --wait
+```
+
+The init service applies the Doctrine migrations and creates the demo office
+and accounts on first boot. Angular is built inside Docker, so the standalone
+setup needs no host Node.js or PHP installation.
+
+| Address | Use |
+| --- | --- |
+| <http://localhost:8080> | Hot Desk |
+| <http://localhost:8025> | Mailpit inbox for booking notifications |
+
+Get the generated demo passwords:
 
 ```sh
 docker compose --env-file .compose.env exec backend cat .local/accounts.json
 ```
 
-Use `admin@hotdesk.test` for administration and `anna@hotdesk.test` or
-`piotr@hotdesk.test` for the member views. The demo office is open
-08:00–18:00 Europe/Warsaw. Check-in can be demonstrated during those hours,
-or after changing the demo office hours before making a booking.
+Sign in as `admin@hotdesk.test` to manage the workspace or as
+`anna@hotdesk.test` or `piotr@hotdesk.test` to try the member workflow.
+The seeded Kraków office is open **08:00–18:00 Europe/Warsaw**. To demonstrate
+check-in outside that window, edit the demo office hours before booking.
 
-Booking notifications appear in Mailpit at <http://localhost:8025>. If either
-port is in use, set `HOT_DESK_PORT` or `HOT_DESK_MAIL_PORT` in `.compose.env`.
-Run `docker compose --env-file .compose.env down` to stop the stack.
-The database and demo credentials persist in Docker volumes.
+Set `HOT_DESK_PORT` or `HOT_DESK_MAIL_PORT` in `.compose.env` if a port is already
+in use. Stop the services with
+`docker compose --env-file .compose.env down`. The database and demo credentials
+persist in Docker volumes.
 
-## Development on the shared PHP environment
+## Booking rules
 
-The optional `bash scripts/setup.sh` workflow uses the local
-`/var/www/docker-environment` FrankenPHP service with `pdo_pgsql` enabled and
-Node 22.12+ on the host. Put the checkout at `/var/www/sites/hot-desk` and open
-<http://hot-desk.localhost>. Run `bash scripts/worker.sh` in a separate terminal
-for notifications. This workflow uses `compose.dev.yaml` and its own database.
+1. Reserve a desk for today or tomorrow in the office's time zone. The booking
+   covers the office's working day.
+2. A desk and a person can each have only one active booking per day. The app
+   also checks overlapping office hours across time zones.
+3. A permanent assignment reserves the **right to book** that desk for its
+   assignee. The assignee can book only that desk, and other members cannot book
+   it while the assignment is active.
+4. A booking can be edited or cancelled before check-in. Check-in opens during
+   office hours on the booking date. Cancelling or checking out frees the desk,
+   subject to permanent assignments. The audit history retains each booking and attendance change.
 
-## Main rules
+## How it works
 
-- Reserve today or tomorrow, interpreted in the office timezone. All calendar
-  days are initially bookable, including weekends. Office hours are configurable.
-- One active desk reservation per person/day and one per desk/day. Cross-office
-  reservations also check actual time overlap.
-- A permanent seat limits its owner to that desk and excludes other users.
-  Assignments do not create reservations automatically.
-- Check in on the reserved day during office hours. Check-in is a button;
-  automatic Wi-Fi detection is not implemented.
-- Cancel before check-in, or check out after check-in. Both release the desk for
-  the remainder of the day, subject to permanent assignments.
-- Past reservations and events remain in history. An elapsed reservation does
-  not generate a fictional check-out event.
-- Resolve conflicting bookings/assignments before moving or deactivating resources.
-  Resources referenced by history cannot be deleted. The last active admin is protected.
+**Stack:** Angular 21, Symfony 7.4 on PHP 8.3, Doctrine ORM, and PostgreSQL 18.
+Symfony Messenger processes notification emails in a separate worker.
 
-```mermaid
-stateDiagram-v2
-    [*] --> BOOKED: reserve
-    BOOKED --> CHECKED_IN: check in
-    BOOKED --> CANCELLED: cancel
-    CHECKED_IN --> CHECKED_OUT: check out
-```
+Angular sends a JSON request to a Symfony controller. A request DTO validates
+the input, the service checks the business rules, and Doctrine reads or writes
+PostgreSQL. Symfony Security uses server-side sessions and the USER and ADMIN
+roles. A CSRF token is required for mutations, and the API returns structured
+errors with field details where available.
 
-## Architecture
+For a booking change, the service writes the booking, audit event, and notification
+queue entry in one transaction. A PostgreSQL transaction lock coordinates
+booking and assignment writes. Partial unique indexes enforce active reservations
+per desk and per person. The worker sends the email separately, so a booking
+doesn't wait on SMTP.
 
-Controllers map JSON to validated request DTOs. Services enforce business rules
-and transactions; the repository queries Doctrine entities. Response mappers
-select public fields and never serialize password hashes.
+### Entity relationship diagram
 
-Each successful action writes an append-only `audit_event`: actor, `event_name`,
-`event_date`, `event_type`, and JSONB `event_data`. Booking data identifies the
-owner, desk, day, state and event ID. Users see their own timeline; admins can
-filter the full history. Administrative changes and assignments are logged too.
+![Hot Desk ERD showing offices, desks, bookings, users, permanent seat assignments, and audit events](docs/erd.svg)
 
-Booking/admin writes share a PostgreSQL transaction advisory lock to prevent
-assignment/booking races. This serializes writes, which is sufficient for this
-project's scale. Partial unique indexes additionally protect active daily bookings.
-The booking change, event and queued notification commit or roll back together.
+The diagram shows the six business tables and their foreign keys. See the
+[data model notes](docs/data-model.md) for constraints and queue tables.
 
-The worker sends an immutable event snapshot and records processed IDs to avoid
-normal duplicate handling. If SMTP delivery succeeds and the process crashes
-before committing that marker, retrying can still send a duplicate email.
+### API documentation and Swagger UI
 
-Authentication uses Symfony Security, hashed passwords and server-side sessions
-with HttpOnly/SameSite cookies. Mutations require a CSRF header, including login.
-Admin routes require `ROLE_ADMIN`; disabled users lose access on their next request.
-Login attempts are rate limited. Use HTTPS when deploying outside local development.
+Sign in to Hot Desk, then open
+[Swagger UI](http://localhost:8080/app/swagger/index.html) on the same host.
+Under **Workspace**, open **GET /offices**, select **Try it out**, and click
+**Execute**. Swagger uses your existing session and shows the HTTP status and
+JSON response. The UI supports trying GET requests.
 
-See [ERD](docs/data-model.md), [OpenAPI](docs/openapi.yaml) and the authenticated
-`/api/openapi.json` endpoint.
+![Swagger UI showing the documented workspace endpoints](docs/screenshots/swagger-overview.png)
 
-## Tests and formatting
+![A live GET /api/offices request showing HTTP 200 and the returned office data](docs/screenshots/swagger-get-offices.png)
 
-Use VS Code **Run Test Task → test**, or the same command directly:
+The [OpenAPI specification](docs/openapi.yaml) is also available at
+`/api/openapi.json` after sign-in. See the
+[course requirements map](docs/requirements.md), [demo outline](docs/demo.md),
+and [coding standards](docs/coding-standards.md) for more project details.
 
-```bash
+## Development and tests
+
+The optional shared PHP workflow requires the FrankenPHP service at
+`/var/www/docker-environment` with `pdo_pgsql` enabled and Node 22.12 or newer
+in the 22.x line. With the checkout at `/var/www/sites/hot-desk`, run:
+
+```sh
+bash scripts/setup.sh
 bash scripts/test.sh
 ```
 
-The two test files contain 12 policy tests and 7 API integration tests. They use
-`hotdesk_test` and reset its fixtures. Never use a test database containing data
-to keep.
+That workflow uses `compose.dev.yaml` and serves the app at
+<http://hot-desk.localhost>. Run `bash scripts/worker.sh` in a separate terminal
+for notifications. The standalone Compose setup starts its own worker.
 
-Use the VS Code **format** task, or:
-
-```bash
-bash scripts/format.sh
-npm --prefix frontend run format:check
-bash scripts/php.sh vendor/bin/php-cs-fixer fix --dry-run --diff
-```
-
-See [coding standards](docs/coding-standards.md). Credentials, runtime data,
-dependencies and build output are excluded from Git.
-
-## Delivery
-
-[Requirements coverage](docs/requirements.md) maps the project to the course
-criteria. [Demo outline](docs/demo.md) describes a 3–5 minute presentation.
-
-The course submission also requires a repository URL, a final commit SHA or tag,
-and a recorded demonstration.
+The test command runs **12 policy tests and 7 REST API integration tests**. It
+uses the separate `hotdesk_test` database and resets its fixtures. The same
+command is available through VS Code's **Run Test Task**. Run
+`bash scripts/format.sh` to apply PHP-CS-Fixer and Prettier.
